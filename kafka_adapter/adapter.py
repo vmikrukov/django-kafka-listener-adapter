@@ -1,3 +1,5 @@
+import json
+
 from kafka import KafkaConsumer
 from datalake.settings import KAFKA_HOST, KAFKA_PORT
 from kafka_adapter.handler import KafkaBaseHandler
@@ -43,7 +45,7 @@ class KafkaAdapter:
             logging.info("%s:%d:%d: key=%s value=%s" % (message.topic, message.partition,
                                                         message.offset, message.key,
                                                         message.value))
-            payload = message.value.decode('utf-8')
+            payload = json.loads(message.value.decode('utf-8'))
             for h in cls.get_appropriate_handlers(message.topic, cls.handlers):
                 cls.handle(payload, h)
         logging.info("Consuming finished.")
