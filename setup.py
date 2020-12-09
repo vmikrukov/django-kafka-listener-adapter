@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='django-kafka-listener-adapter',
-    version='0.3.3',
+    version='0.3.4',
     description='A Django app to listen kafka topics.',
     author='Vladimir Mikryukov',
     author_email='motobiker2008@gmail.com',

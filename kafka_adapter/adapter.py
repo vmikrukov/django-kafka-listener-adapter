@@ -4,13 +4,13 @@ from time import sleep
 from kafka import KafkaConsumer
 from datalake.settings import KAFKA_HOST, KAFKA_PORT
 
-from kafka_adapter.singleton import singleton
 from kafka_adapter.handler import KafkaBaseHandler
 import logging
 
+from kafka_adapter.utils import MetaSingleton
 
-@singleton
-class KafkaAdapter:
+
+class KafkaAdapter(metaclass=MetaSingleton):
     topics = []
     handlers = []
     consumer = None
