@@ -4,7 +4,7 @@ from time import sleep
 from kafka import KafkaConsumer
 from datalake.settings import KAFKA_HOST, KAFKA_PORT
 
-from kafka_adapter import singleton
+from kafka_adapter.singleton import singleton
 from kafka_adapter.handler import KafkaBaseHandler
 import logging
 
