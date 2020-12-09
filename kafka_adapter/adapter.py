@@ -1,13 +1,17 @@
 import json
+from time import sleep
 
 from kafka import KafkaConsumer
 from datalake.settings import KAFKA_HOST, KAFKA_PORT
+
+from kafka_adapter import singleton
 from kafka_adapter.handler import KafkaBaseHandler
 import logging
 
 
+@singleton
 class KafkaAdapter:
-    topics = ['_always_empty_topic']
+    topics = []
     handlers = []
     consumer = None
 
@@ -16,9 +20,9 @@ class KafkaAdapter:
         return KafkaBaseHandler.__subclasses__()
 
     @classmethod
-    def get_appropriate_handlers(cls, kafka_topic, available_handlers):
+    def get_appropriate_handlers(cls, kafka_topic):
         res = []
-        for h in available_handlers:
+        for h in cls.handlers:
             if h.get_topic() == kafka_topic:
                 res.append(h)
         return res
@@ -27,12 +31,15 @@ class KafkaAdapter:
     def start(cls):
         cls.handlers = cls.get_available_kafka_handlers()
         logging.info(f"Available handlers: {cls.handlers}")
+        cls.topics = [h.get_topic() for h in cls.handlers]
+        while not cls.topics:
+            logging.info(f"No topics to monitor: {cls.topics}")
+            sleep(1)
         cls.consumer = KafkaConsumer(*cls.topics,
                                      bootstrap_servers=[f'{KAFKA_HOST}:{KAFKA_PORT}'],
                                      # auto_offset_reset='earliest',
                                      # enable_auto_commit=False,
                                      api_version=(0, 10, 1))
-        cls.update_topics()
         cls.consume_messages()
 
     @classmethod
@@ -46,7 +53,7 @@ class KafkaAdapter:
                                                         message.offset, message.key,
                                                         message.value))
             payload = json.loads(message.value.decode('utf-8'))
-            for h in cls.get_appropriate_handlers(message.topic, cls.handlers):
+            for h in cls.get_appropriate_handlers(message.topic):
                 cls.handle(payload, h)
         logging.info("Consuming finished.")
 
@@ -56,6 +63,5 @@ class KafkaAdapter:
 
     @classmethod
     def update_topics(cls):
-        topics = [h.get_topic() for h in cls.handlers]
-        cls.topics = topics if topics else ['_always_empty_topic']
-        cls.consumer.subscribe(cls.topics)
+        cls.stop()
+        cls.start()
